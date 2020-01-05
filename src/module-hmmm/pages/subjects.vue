@@ -1,17 +1,176 @@
 <template>
-  <div class="dashboard-container">
-    <div class="app-container">学科管理</div>
-  </div>
+  <el-card>
+    <el-row slot="header">
+      <el-button type="primary" @click="addItem">新增学科</el-button>
+    </el-row>
+    <el-form inline label-width="80px">
+      <el-form-item label="学科名称">
+        <el-input v-model="subjectName" @change="blur"></el-input>
+      </el-form-item>
+      <el-form-item>
+        <el-button @click="clear">清除</el-button>
+        <el-button @click="search" type="primary">搜索</el-button>
+      </el-form-item>
+    </el-form>
+    <el-table :data="list">
+      <el-table-column label="序号" prop="id"></el-table-column>
+      <el-table-column label="学科名称" prop="subjectName"></el-table-column>
+      <el-table-column label="创建者" prop="creator"></el-table-column>
+      <el-table-column label="创建日期" prop="addDate">
+        <template slot-scope="obj">
+          {{
+          obj.row.addDate | parseTimeByString
+          }}
+        </template>
+      </el-table-column>
+      <el-table-column label="前台是否显示" prop="isFrontDisplay" :formatter="formatterBool"></el-table-column>
+      <el-table-column label="二级目录" prop="twoLevelDirectory"></el-table-column>
+      <el-table-column label="标签" prop="subjects"></el-table-column>
+      <el-table-column label="题目数量" prop="totals"></el-table-column>
+      <el-table-column label="操作" width="220px">
+        <template slot-scope="obj">
+          <el-button type="text" size="small">学科分类</el-button>
+          <el-button type="text" size="small">学科标签</el-button>
+          <el-button type="text" size="small" @click="modify(obj.row.id)">修改</el-button>
+          <el-button type="text" size="small" @click="delItem(obj.row.id)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-row type="flex" justify="end" style="height:60px" align="middle">
+      <el-pagination
+        background
+        :page-size="page.pageSize"
+        :current-page="page.currentPage"
+        layout="total, prev, pager, next"
+        :total="page.total"
+        @current-change="changePage"
+      ></el-pagination>
+    </el-row>
+    <el-dialog :show-close="false" :visible="dialogVisible" @close="beforeClose">
+      <el-form ref="myForm" :model="formData" :rules="rules" label-width="150px">
+        <el-form-item label="目录名称" prop="subjectName">
+          <el-input v-model="formData.subjectName"></el-input>
+        </el-form-item>
+        <el-form-item label="是否前台显示" prop="isFrontDisplay">
+          <!-- <el-input v-model="formData.isFrontDisplay"></el-input> -->
+          <el-switch v-model="formData.isFrontDisplay" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+        </el-form-item>
+      </el-form>
+      <el-row slot="footer" type="flex" justify="end">
+        <el-button type="primary" @click="btnOK">确定</el-button>
+        <el-button @click="beforeClose">取消</el-button>
+      </el-row>
+    </el-dialog>
+  </el-card>
 </template>
 
 <script>
+import { list, add, remove, update, detail } from "../../api/hmmm/subjects";
+
 export default {
-  name: 'SubjectsList',
   data() {
-    return {}
+    return {
+      dialogVisible: false,
+      list: [],
+      subjects: [],
+      subjectName: "",
+      formData: {
+        subjectName: "",
+        isFrontDisplay: false
+      },
+      rules: {
+        subjectName: [
+          { required: true, message: "目录名称不能为空", trigger: "blur" }
+        ],
+        subjectID: [
+          { required: true, message: "学科不能为空", trigger: "blur" }
+        ]
+      },
+      page: {
+        currentPage: 1,
+        pageSize: 10,
+        total: 0
+      }
+    };
+  },
+  methods: {
+   formatterBool(row, column, cellValue) {
+      return cellValue ? "显示" : "-";
+    },
+    // 输入框为空时，重新加载数据
+    blur() {
+      this.getsubject();
+    },
+    beforeClose() {
+      this.resetFields();
+      this.dialogVisible = false;
+    },
+    async modify(id) {
+      let result = await detail({ id });
+      this.formData = result.data;
+      this.dialogVisible = true;
+    },
+    async delItem(id) {
+      await this.$confirm("确认删除此目录吗");
+      await remove({ id });
+      this.getsubject();
+    },
+    resetFields() {
+      // this.$refs.myForm.resetFields();
+      this.formData = {
+        subjectName: "",
+        subjectID: null
+      };
+      this.$refs.myForm.clearValidate();
+    },
+    addItem() {
+      this.dialogVisible = true;
+    },
+    async btnOK() {
+      await this.$refs.myForm.validate();
+      this.formData.id ? await update(this.formData) : await add(this.formData);
+      this.$message({
+        type: "success",
+        message: "操作成功"
+      });
+      this.resetFields();
+      this.getCondition();
+      this.dialogVisible = false;
+    },
+    changePage(newPage) {
+      this.page.currentPage = newPage;
+      this.getCondition();
+    },
+    getCondition() {
+      let params = {
+        page: this.page.currentPage,
+        pageSize: this.page.pageSize,
+        subjectName: this.subjectName
+      };
+      this.getsubject(params);
+    },
+    questionFormatter(row, column, cellValue) {
+      let result = this.questionType.filter(item => item.value == cellValue);
+      return result.length ? result[0].label : "未知";
+    },
+    search() {
+      this.page.currentPage = 1;
+      this.getCondition();
+    },
+    clear() {
+      this.subjectName = "";
+      this.getsubject();
+    },
+    async getsubject(data) {
+      let result = await list(data);
+      this.list = result.data.items;
+      this.page.total = result.data.counts;
+    }
+  },
+  async created() {
+    this.getsubject();
   }
-}
+};
 </script>
 
-<style scoped>
-</style>
+<style lang="scss"></style>

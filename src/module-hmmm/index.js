@@ -13,15 +13,15 @@ import routerMaps from './router'
 // import app from './store/app'
 
 export default {
-  install(module, store) {
-    // 注册路由
-    for (const iterator of routerMaps) {
-      asyncRouterMap.push(iterator)
+    install(module, store) {
+        // 注册路由
+        for (const iterator of routerMaps) {
+            asyncRouterMap.push(iterator)
+        }
+        // asyncRouterMap.push(routerMaps[0])
+        // 注册状态管理
+        if (store !== undefined) {
+            // store.registerModule('app', app)
+        }
     }
-    // asyncRouterMap.push(routerMaps[0])
-    // 注册状态管理
-    if (store !== undefined) {
-      // store.registerModule('app', app)
-    }
-  }
 }

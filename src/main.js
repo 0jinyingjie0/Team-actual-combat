@@ -22,12 +22,13 @@ import base from '@/module-manage/' // 用户管理
 // import form from '@/module-form/' // 表单页
 // import details from '@/module-details/' // 表单页
 import hmmm from '@/module-hmmm/' // 黑马面面
+// 富文本编辑器
 
 Vue.use(dashboard, store)
 Vue.use(base, store)
-// Vue.use(list, store)
-// Vue.use(form, store)
-// Vue.use(details, store)
+    // Vue.use(list, store)
+    // Vue.use(form, store)
+    // Vue.use(details, store)
 Vue.use(hmmm, store)
 
 /*
@@ -36,21 +37,21 @@ Vue.use(hmmm, store)
 
 // 饿了么
 Vue.use(Element, {
-  size: 'medium', // set element-ui default size
-  i18n: (key, value) => i18n.t(key, value)
-})
-// 过滤器
+        size: 'medium', // set element-ui default size
+        i18n: (key, value) => i18n.t(key, value)
+    })
+    // 过滤器
 Object.keys(filters).forEach(key => {
-  Vue.filter(key, filters[key])
+    Vue.filter(key, filters[key])
 })
 
 Vue.config.productionTip = false
 
 /* eslint-disable */
 new Vue({
-  el: '#app',
-  router,
-  store,
-  i18n,
-  render: h => h(App)
+    el: '#app',
+    router,
+    store,
+    i18n,
+    render: h => h(App)
 })
